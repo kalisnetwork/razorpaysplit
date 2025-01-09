@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Success</title>
+     <style>
+        body {
+            font-family: sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .success-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+            text-align: center;
+        }
+       .success-container h2 {
+           color: #28a745;
+       }
+
+       .success-container p{
+           margin-bottom: 10px;
+       }
+    </style>
+</head>
+<body>
+<div class="success-container">
+    <h2>Payment Successful</h2>
+    <p>Payment ID: <span id="payment-id"></span></p>
+    <p>Amount Paid: <span id="amount"></span> INR</p>
+
+    <button onclick="window.location.href='/index.html'">Go Back to Payment Form</button>
+</div>
+<script>
+    const urlParams = new URLSearchParams(window.location.search);
+
+    document.getElementById('payment-id').textContent = urlParams.get('paymentId');
+    document.getElementById('amount').textContent = urlParams.get('amount');
+
+</script>
+</body>
+</html>

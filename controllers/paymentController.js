@@ -4,8 +4,8 @@ import { createRazorpayOrder } from '../utils/razorpayUtils.js';
 export const processPayment = async (req, res) => {
   console.log('Processing payment request:', req.body);
   try {
-    const { amount, currency, receipt, linkedAccountId } = req.body;
-    const order = await createRazorpayOrder(amount, currency, receipt, linkedAccountId);
+    const { amount, currency, receipt, linkedAccountId, commissionAmount } = req.body;
+    const order = await createRazorpayOrder(amount, currency, receipt, linkedAccountId, commissionAmount);
 
     res.status(200).json({
       success: true,

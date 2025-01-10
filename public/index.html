@@ -82,6 +82,10 @@
             <label for="amount">Amount (INR)</label>
             <input type="number" id="amount" name="amount" required>
         </div>
+         <div class="form-group">
+            <label for="commission-amount">Commission Amount (INR)</label>
+            <input type="number" id="commission-amount" name="commission-amount" required>
+        </div>
         <button type="button" id="pay-button">Pay Now</button>
     </form>
 </div>
@@ -91,6 +95,7 @@
         async function initiatePayment() {
             const amount = document.getElementById('amount').value;
             const linkedAccountId = document.getElementById('linked-account').value;
+            const commissionAmount = document.getElementById('commission-amount').value;
             try {
                 const response = await fetch('/api/payments/process', {
                     method: 'POST',
@@ -102,6 +107,7 @@
                         currency: 'INR',
                         receipt: `receipt_${Date.now()}`,
                          linkedAccountId,
+                         commissionAmount: parseInt(commissionAmount)
                     }),
                 });
 

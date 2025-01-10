@@ -6,21 +6,22 @@ const razorpay = new Razorpay({
   key_secret: 'nmn17cT5dCnAvXWauzLIXLuW',
 });
 
-export const createRazorpayOrder = (amount, currency, receipt, linkedAccountId) => {
+export const createRazorpayOrder = (amount, currency, receipt, linkedAccountId, commissionAmount) => {
   console.log('Creating Razorpay order with transfer details...');
   return new Promise((resolve, reject) => {
-    const options = {
-      amount: amount * 100,
-      currency,
-      receipt,
-      transfers: [
-          {
-              account: linkedAccountId,
-              amount: (amount * 0.5) * 100,
-              currency: "INR",
-          }
-      ]
-    };
+        const transferAmount = commissionAmount * 100
+        const options = {
+            amount: amount * 100,
+            currency,
+            receipt,
+            transfers: [
+                {
+                    account: linkedAccountId,
+                    amount: transferAmount,
+                    currency: "INR",
+                }
+            ]
+        };
 
     razorpay.orders.create(options, (err, order) => {
       if (err) {

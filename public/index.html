@@ -61,6 +61,39 @@
         button:hover {
             background-color: #4cae4c;
         }
+         .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -73,10 +106,9 @@
         </div>
          <div class="form-group">
             <label for="linked-account">Field Executive</label>
-            <select id="linked-account" name="linked-account" required>
-              <option value="acc_PhJnq5lEc2Hxyn">Kalyan</option>
-                <!-- Add more linked account options here -->
-            </select>
+             <select id="linked-account" name="linked-account" required>
+               <option value="acc_PhJnq5lEc2Hxyn">Linked Account 1</option>
+             </select>
         </div>
           <div class="form-group">
             <label for="amount">Amount (INR)</label>
@@ -87,10 +119,205 @@
             <input type="number" id="commission-amount" name="commission-amount" required>
         </div>
         <button type="button" id="pay-button">Pay Now</button>
+         <button type="button" id="create-account-button">Create Linked Account</button>
     </form>
 </div>
+ <div id="createAccountModal" class="modal">
+    <div class="modal-content">
+         <span class="close" id="closeModal">×</span>
+        <h2>Create Linked Account</h2>
+        <form id="create-account-form">
+             <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+             <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="number" id="phone" name="phone" required>
+            </div>
+             <div class="form-group">
+                <label for="legal_business_name">Legal Business Name</label>
+                <input type="text" id="legal_business_name" name="legal_business_name" required>
+            </div>
+              <div class="form-group">
+                <label for="business_type">Business Type</label>
+                   <select id="business_type" name="business_type" required>
+                         <option value="partnership">Partnership</option>
+                         <option value="proprietorship">Proprietorship</option>
+                         <option value="private_limited">Private Limited</option>
+                           <option value="public_limited">Public Limited</option>
+                   </select>
+            </div>
+
+             <div class="form-group">
+                <label for="contact_name">Contact Name</label>
+                <input type="text" id="contact_name" name="contact_name" required>
+            </div>
+             <div class="form-group">
+                <label for="street1">Street 1</label>
+                <input type="text" id="street1" name="street1" required>
+            </div>
+             <div class="form-group">
+                <label for="street2">Street 2</label>
+                <input type="text" id="street2" name="street2">
+            </div>
+            <div class="form-group">
+                <label for="city">City</label>
+                <input type="text" id="city" name="city" required>
+            </div>
+            <div class="form-group">
+                <label for="state">State</label>
+                  <select id="state" name="state" required>
+                        <option value="ANDHRA PRADESH">Andhra Pradesh</option>
+                        <option value="ARUNACHAL PRADESH">Arunachal Pradesh</option>
+                        <option value="ASSAM">Assam</option>
+                        <option value="BIHAR">Bihar</option>
+                        <option value="CHHATTISGARH">Chhattisgarh</option>
+                        <option value="GOA">Goa</option>
+                         <option value="GUJARAT">Gujarat</option>
+                         <option value="HARYANA">Haryana</option>
+                          <option value="HIMACHAL PRADESH">Himachal Pradesh</option>
+                          <option value="JAMMU AND KASHMIR">Jammu and Kashmir</option>
+                           <option value="JHARKHAND">Jharkhand</option>
+                           <option value="KARNATAKA">Karnataka</option>
+                            <option value="KERALA">Kerala</option>
+                             <option value="MADHYA PRADESH">Madhya Pradesh</option>
+                             <option value="MAHARASHTRA">Maharashtra</option>
+                            <option value="MANIPUR">Manipur</option>
+                             <option value="MEGHALAYA">Meghalaya</option>
+                             <option value="MIZORAM">Mizoram</option>
+                            <option value="NAGALAND">Nagaland</option>
+                             <option value="ODISHA">Odisha</option>
+                             <option value="PUNJAB">Punjab</option>
+                             <option value="RAJASTHAN">Rajasthan</option>
+                            <option value="SIKKIM">Sikkim</option>
+                             <option value="TAMIL NADU">Tamil Nadu</option>
+                            <option value="TELANGANA">Telangana</option>
+                             <option value="TRIPURA">Tripura</option>
+                             <option value="UTTAR PRADESH">Uttar Pradesh</option>
+                            <option value="UTTARAKHAND">Uttarakhand</option>
+                            <option value="WEST BENGAL">West Bengal</option>
+                   </select>
+            </div>
+             <div class="form-group">
+                <label for="postal_code">Postal Code</label>
+                 <input type="number" id="postal_code" name="postal_code" required>
+            </div>
+            <button type="button" id="submit-linked-account">Create Account</button>
+        </form>
+    </div>
+</div>
     <script>
+         document.addEventListener('DOMContentLoaded', fetchLinkedAccounts);
+         document.getElementById('create-account-button').addEventListener('click', openModal);
+           document.getElementById('closeModal').addEventListener('click', closeModal);
+          document.getElementById('submit-linked-account').addEventListener('click', createLinkedAccount);
         document.getElementById('pay-button').addEventListener('click', initiatePayment);
+
+         function openModal() {
+            document.getElementById('createAccountModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('createAccountModal').style.display = 'none';
+        }
+
+
+        async function createLinkedAccount() {
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+              const legal_business_name = document.getElementById('legal_business_name').value;
+               const business_type = document.getElementById('business_type').value;
+                const contact_name = document.getElementById('contact_name').value;
+                 const street1 = document.getElementById('street1').value;
+                 const street2 = document.getElementById('street2').value;
+                   const city = document.getElementById('city').value;
+                    const state = document.getElementById('state').value;
+                     const postal_code = document.getElementById('postal_code').value;
+                  const reference_id = `ref_${Date.now()}`;
+           try {
+               const response = await fetch('/api/payments/linked-accounts', {
+                   method: 'POST',
+                   headers: {
+                       'Content-Type': 'application/json'
+                   },
+                   body: JSON.stringify({
+                       email,
+                       phone,
+                       legal_business_name,
+                       business_type,
+                       reference_id,
+                       contact_name,
+                       type: 'route',
+                       profile: {
+                          category: 'others',
+                           subcategory: 'others',
+                           addresses: {
+                                registered: {
+                                     street1,
+                                    street2,
+                                     city,
+                                     state,
+                                    postal_code,
+                                     country: "IN",
+                                }
+                           }
+                       },
+                        legal_info: {
+                           pan: "AAACL1234C",
+                            gst: "18AABCU9603R1ZM"
+                        }
+                   })
+               })
+                if (!response.ok) {
+                     const errorData = await response.json();
+                     throw new Error(errorData.message);
+                }
+                const data = await response.json();
+                  console.log("New account created successfully ", data);
+               closeModal();
+                 fetchLinkedAccounts();
+           } catch (error) {
+               console.error("Failed to create linked account: ", error)
+               alert("Failed to create linked account " + error.message);
+           }
+         }
+
+        async function fetchLinkedAccounts() {
+             try {
+                  const linkedAccountSelect = document.getElementById('linked-account');
+                 linkedAccountSelect.innerHTML = '';
+                     const option = document.createElement('option');
+                    option.value = "acc_PhJnq5lEc2Hxyn";
+                     option.textContent = "acc_PhJnq5lEc2Hxyn"; // you can show name also
+                      option.addEventListener('click', () => {
+                         fetchLinkedAccountDetails("acc_PhJnq5lEc2Hxyn");
+                     })
+                    linkedAccountSelect.appendChild(option)
+
+             } catch (error) {
+                 console.error("Failed to fetch linked accounts: ", error);
+                  alert('Failed to fetch linked accounts: ' + error.message);
+             }
+        }
+
+
+         async function fetchLinkedAccountDetails(accountId) {
+              try {
+                  const response = await fetch(`/api/payments/linked-accounts/${accountId}`);
+
+                   if (!response.ok) {
+                       throw new Error("failed to fetch details of linked account" )
+                   }
+
+                    const data = await response.json();
+                   console.log("fetched details ", data);
+              } catch(error) {
+                 console.error("failed to fetch account details ", error);
+                  alert('Failed to fetch linked account details: ' + error.message);
+              }
+         }
+
 
         async function initiatePayment() {
             const amount = document.getElementById('amount').value;
@@ -124,13 +351,38 @@
                     name: "Business Listing App",
                     description: "Listing Fee Payment",
                     order_id: data.order.id,
-                    handler: (response) => {
-                         const params = new URLSearchParams({
-                           paymentId: response.razorpay_payment_id,
-                           amount: amount,
-                       });
-                         window.location.href = `/success.html?${params.toString()}`;
-                    },
+                     handler: async (response) => {
+                          try {
+                             const paymentResponse = await fetch('/api/payments/process', {
+                                  method: 'POST',
+                                 headers: {
+                                     'Content-Type': 'application/json'
+                                 },
+                                  body: JSON.stringify({
+                                       order_id: response.razorpay_order_id,
+                                       payment_id: response.razorpay_payment_id,
+                                       signature: response.razorpay_signature,
+                                       amount: parseInt(amount),
+                                       linkedAccountId
+                                   })
+                             });
+                                  if (!paymentResponse.ok) {
+                                   const errorData = await paymentResponse.json()
+                                     throw new Error(errorData.message)
+                                 }
+                                 const paymentData = await paymentResponse.json();
+                                 const params = new URLSearchParams({
+                                    paymentId: paymentData.paymentId,
+                                    amount: amount,
+                                     message: paymentData.message
+                                 });
+                                  window.location.href = `/success.html?${params.toString()}`;
+                          } catch (error) {
+                             console.error("failed to verify payment from backend ", error)
+                               alert('Failed to verify payment from backend: ' + error.message);
+                         }
+
+                       },
                     prefill: {
                         name: document.getElementById('shop-owner').value,
                     }

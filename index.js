@@ -18,9 +18,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Enable CORS
 app.use(cors({
   origin: [
-    'http://localhost:3000', // Explicitly allow port 3000
-    'http://localhost:5173', // Explicitly allow port 5173
-      /^http:\/\/localhost:\d{4}$/ // Regex to allow any port on localhost
+    'http://localhost:3000',
+    'http://localhost:5173',
+    /^http:\/\/localhost:\d{4}$/
   ],
     credentials: true,
     optionsSuccessStatus: 200,

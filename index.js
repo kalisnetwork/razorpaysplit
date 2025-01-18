@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import paymentRoutes from './routes/paymentRoutes.js';
+import invoiceRoutes from './routes/invoiceRoutes.js';
 import cors from 'cors';
 import multer from 'multer';
 
@@ -20,6 +21,7 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:5173',
+    'http://localhost:5500',
     /^http:\/\/localhost:\d{4}$/
   ],
     credentials: true,
@@ -42,6 +44,7 @@ app.use(upload.fields([
 
 // Use payment routes
 app.use('/api/payments', paymentRoutes);
+app.use('/api/invoices', invoiceRoutes);
 
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);

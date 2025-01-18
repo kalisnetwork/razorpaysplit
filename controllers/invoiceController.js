@@ -50,7 +50,7 @@ export const sendInvoiceEmail = async (req, res) => {
         if (!user.createdAt || !user.createdAt._seconds) {
             console.warn("Missing creation time, setting default value");
             user.createdAt = {
-                _seconds: Math.floor(Date.now() / 1000), // Use current time as default
+                _seconds: Math.floor(Date.now() / 1000),
                 _nanoseconds: 0,
             };
         }
@@ -72,12 +72,21 @@ export const sendInvoiceEmail = async (req, res) => {
         const invoiceId = `INV-${formattedDate}-${String(counter).padStart(4, "0")}`;
         console.log(`Generated Invoice ID: ${invoiceId}`);
 
+        let splitDetails = null;
+        if (req.body.commissionAmount) {
+            splitDetails = {
+                commissionAmount: req.body.commissionAmount,
+                transferDetails: req.body.transferDetails || "N/A",
+            };
+        }
+
         // Send email
         const response = await invoiceService.sendEmail(
             user,
             paymentId,
             amount,
-            invoiceId
+            invoiceId,
+            splitDetails
         );
 
         // Save invoice details
@@ -88,6 +97,7 @@ export const sendInvoiceEmail = async (req, res) => {
             amount: amount,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
             user: user,
+            splitDetails: splitDetails,
         });
 
         console.log("Email sending was successful", response);
@@ -121,8 +131,15 @@ export const handleSplitPaymentInvoice = async (req, res) => {
             return;
         }
 
-        const { email, paymentId, amount } = req.body;
-        console.log('Updating invoice after split payment:', { email, paymentId, amount });
+        const { email, paymentId, amount, commissionAmount, transferDetails } = req.body;
+        console.log('Updating invoice after split payment:', { email, paymentId, amount, commissionAmount, transferDetails });
+
+        // Add splitDetails to the request body
+        req.body.splitDetails = {
+            commissionAmount,
+            transferDetails,
+        };
+
         await sendInvoiceEmail(req, res);
     } catch (error) {
         console.error('Error handling split payment invoice:', error);
@@ -139,6 +156,7 @@ export const handleDirectPaymentInvoice = async (req, res) => {
 
         const { email, paymentId, amount } = req.body;
         console.log('Updating invoice after direct payment:', { email, paymentId, amount });
+
         await sendInvoiceEmail(req, res);
     } catch (error) {
         console.error('Error handling direct payment invoice:', error);

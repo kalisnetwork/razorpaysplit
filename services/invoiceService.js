@@ -14,17 +14,22 @@ const sendEmail = async (
   user,
   paymentId,
   amount,
-  invoiceId
+  invoiceId,
+  splitDetails = null
 ) => {
   const {
     email,
     fullName,
+    displayName,
     phoneNumber,
     countryCode,
     createdAt,
     companyName,
     gstNo,
+    bankDetails,
   } = user;
+
+  const recipientName = fullName || displayName || (bankDetails && bankDetails.beneficiaryName) || "Valued Customer";
 
   if (!createdAt || !createdAt._seconds || !createdAt._nanoseconds) {
     throw new Error("Invalid creation time");
@@ -42,6 +47,13 @@ const sendEmail = async (
 
   const gstField = gstNo ? `<p style="margin-bottom: 4px;"><strong>GST Number:</strong> ${gstNo}</p>` : "";
   const companyField = companyName ? `<p style="margin-bottom: 4px;"><strong>Company Name:</strong> ${companyName}</p>` : "";
+
+  let splitDetailsField = "";
+  if (splitDetails) {
+    splitDetailsField = `
+      <p style="margin-bottom: 4px; font-size: 14px; color: #555"><strong>Commission Amount:</strong> ${splitDetails.commissionAmount}</p>
+    `;
+  }
 
   const htmlContent = `
       <!DOCTYPE html>
@@ -68,7 +80,7 @@ const sendEmail = async (
                 <div class="header-row" style=" display: table-row;
                   width: 100%;">
                    <div style="display: table-cell; vertical-align: middle; width: 50%; white-space: nowrap;">
-                      <img src="https://firebasestorage.googleapis.com/v0/b/addphonebook-67776.firebasestorage.app/o/images%2FAPB-Logo.png?alt=media&token=02b9faf2-435c-4f3e-82cb-887e0cdfc699" alt="AddPhoneBook Logo" style=" display: inline-block;
+                                         <img src="https://firebasestorage.googleapis.com/v0/b/addphonebook-67776.firebasestorage.app/o/images%2FAPB-Logo.png?alt=media&token=02b9faf2-435c-4f3e-82cb-887e0cdfc699" alt="AddPhoneBook Logo" style=" display: inline-block;
                   max-width: 50px;
                   height: auto;
                   vertical-align: middle;">
@@ -94,7 +106,7 @@ const sendEmail = async (
                  </div>
               </div>
               <div class="content">
-                 <p style="margin-bottom: 10px; color: #555; font-size: 14px;">Dear Valued Customer,</p>
+                 <p style="margin-bottom: 10px; color: #555; font-size: 14px;">Dear ${recipientName},</p>
                  <p style="margin-bottom: 10px; color: #555; font-size: 14px;">Thank you for choosing Add Phone Book. Below is the summary of your recent subscription details.</p>
                   <div class="invoiceDetails" style="margin-top: 15px;
                       margin-bottom: 15px;
@@ -107,6 +119,7 @@ const sendEmail = async (
                       ${gstField}
                       <p style="margin-bottom: 4px; font-size: 14px; color: #555"><strong>Payment ID:</strong> ${paymentId}</p>
                       <p style="margin-bottom: 4px; font-size: 14px; color: #555"><strong>Contact Number:</strong> ${countryCode} ${phoneNumber}</p>
+                      ${splitDetailsField}
                   </div>
                  <h2 style=" font-size: 20px;
                        color: #2c3e50;
@@ -167,16 +180,16 @@ const sendEmail = async (
                                  padding-bottom: 15px;">Grand Total</td>
                         <td style="padding: 12px 10px;
                           border: 1px solid #eee;
-                         text-align: left;   font-size: 16px;
+                          text-align: left; font-size: 16px;
                           font-weight: bold;
                           color: #2c3e50;
-                             background-color: #eaf2ff;
-                              padding-top: 15px;
-                             padding-bottom: 15px;">${(amount * 1.21).toFixed(2)}</td>
-                       </tr>
+                          background-color: #eaf2ff;
+                          padding-top: 15px;
+                          padding-bottom: 15px;">${(amount * 1.21).toFixed(2)}</td>
+                      </tr>
                   </table>
               </div>
-                          <div class="footer" style="text-align: center;
+             <div class="footer" style="text-align: center;
                    width: 100%;
                   margin-top: 30px;
                   font-size: 12px;

@@ -1,10 +1,11 @@
 import { adminInstance } from '../utils/firebase.js';
 import invoiceService from '../services/invoiceService.js';
 import admin from 'firebase-admin';
+import { processPayment, directPaymentOrder } from '../controllers/paymentController.js';
 
 export const sendInvoiceEmail = async (req, res) => {
-    const { email, paymentId, price } = req.body;
-    console.log("Received invoice request with:", { email, paymentId, price });
+    const { email, paymentId, amount } = req.body;
+    console.log("Received invoice request with:", { email, paymentId, amount });
 
     try {
         if (!adminInstance) {
@@ -20,11 +21,11 @@ export const sendInvoiceEmail = async (req, res) => {
             .where("email", "==", email)
             .get();
 
-        let userData = null;
+        let user = null;
 
         if (!userDoc.empty) {
-            userData = userDoc.docs[0].data();
-            console.log('User found in users collection', userData);
+            user = userDoc.docs[0].data();
+            console.log('User found in users collection', user);
         } else {
             // Try businessListers collection
             userDoc = await firestoreInstance
@@ -33,12 +34,12 @@ export const sendInvoiceEmail = async (req, res) => {
                 .get();
                 
             if (!userDoc.empty) {
-                userData = userDoc.docs[0].data();
-                console.log('User found in businessListers collection', userData);
+                user = userDoc.docs[0].data();
+                console.log('User found in businessListers collection', user);
             }
         }
 
-        if (!userData) {
+        if (!user) {
             return res.status(404).json({ 
                 success: false, 
                 message: "User not found in either collection" 
@@ -46,9 +47,9 @@ export const sendInvoiceEmail = async (req, res) => {
         }
 
         // Check for creationTime property or set a default
-        if (!userData.createdAt || !userData.createdAt._seconds) {
+        if (!user.createdAt || !user.createdAt._seconds) {
             console.warn("Missing creation time, setting default value");
-            userData.createdAt = {
+            user.createdAt = {
                 _seconds: Math.floor(Date.now() / 1000), // Use current time as default
                 _nanoseconds: 0,
             };
@@ -73,9 +74,9 @@ export const sendInvoiceEmail = async (req, res) => {
 
         // Send email
         const response = await invoiceService.sendEmail(
-            userData,
+            user,
             paymentId,
-            price,
+            amount,
             invoiceId
         );
 
@@ -84,9 +85,9 @@ export const sendInvoiceEmail = async (req, res) => {
             email: email,
             invoiceId: invoiceId,
             paymentId: paymentId,
-            price: price,
+            amount: amount,
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
-            userData: userData,
+            user: user,
         });
 
         console.log("Email sending was successful", response);
@@ -108,5 +109,39 @@ export const sendInvoiceEmail = async (req, res) => {
             message: "Failed to process invoice request",
             error: error.message
         });
+    }
+};
+
+// Adding new functions to handle payment processing and invoice update
+
+export const handleSplitPaymentInvoice = async (req, res) => {
+    try {
+        const paymentResult = await processPayment(req, res);
+        if (!paymentResult.success) {
+            return;
+        }
+
+        const { email, paymentId, amount } = req.body;
+        console.log('Updating invoice after split payment:', { email, paymentId, amount });
+        await sendInvoiceEmail(req, res);
+    } catch (error) {
+        console.error('Error handling split payment invoice:', error);
+        res.status(500).json({ success: false, message: 'Failed to handle split payment invoice', error: error.message });
+    }
+};
+
+export const handleDirectPaymentInvoice = async (req, res) => {
+    try {
+        const paymentResult = await directPaymentOrder(req, res);
+        if (!paymentResult.success) {
+            return;
+        }
+
+        const { email, paymentId, amount } = req.body;
+        console.log('Updating invoice after direct payment:', { email, paymentId, amount });
+        await sendInvoiceEmail(req, res);
+    } catch (error) {
+        console.error('Error handling direct payment invoice:', error);
+        res.status(500).json({ success: false, message: 'Failed to handle direct payment invoice', error: error.message });
     }
 };

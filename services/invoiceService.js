@@ -1,3 +1,4 @@
+// invoiceService.js
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
@@ -29,21 +30,32 @@ const sendEmail = async (
     bankDetails,
   } = user;
 
-  const recipientName = fullName || displayName || (bankDetails && bankDetails.beneficiaryName) || "Valued Customer";
-
-  if (!createdAt || !createdAt._seconds || !createdAt._nanoseconds) {
-    throw new Error("Invalid creation time");
+  // Basic validation
+  if (!email || !paymentId || !amount || !invoiceId) {
+    throw new Error("Missing required fields for invoice");
   }
 
-  const formattedCreatedAt = new Date(createdAt._seconds * 1000 + createdAt._nanoseconds / 1000000).toLocaleString('en-IN', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'Asia/Kolkata',
-    hour12: true
-  });
+  // Ensure createdAt has the correct format
+  if (!createdAt || typeof createdAt._seconds !== 'number') {
+    console.warn("Invalid createdAt format, using current time");
+    user.createdAt = {
+        _seconds: Math.floor(Date.now() / 1000),
+        _nanoseconds: (Date.now() % 1000) * 1000000
+    };
+  }
+
+  const recipientName = fullName || displayName || (bankDetails && bankDetails.beneficiaryName) || "Valued Customer";
+
+  const formattedCreatedAt = new Date(user.createdAt._seconds * 1000 + (user.createdAt._nanoseconds || 0) / 1000000)
+    .toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'Asia/Kolkata',
+      hour12: true
+    });
 
   const gstField = gstNo ? `<p style="margin-bottom: 4px;"><strong>GST Number:</strong> ${gstNo}</p>` : "";
   const companyField = companyName ? `<p style="margin-bottom: 4px;"><strong>Company Name:</strong> ${companyName}</p>` : "";
@@ -216,7 +228,8 @@ const sendEmail = async (
     await transporter.sendMail(mailOptions);
     return { success: true, message: `Email sent to ${email}` };
   } catch (error) {
-    throw new Error(error.message);
+    console.error('Error sending email:', error);
+    throw new Error(`Failed to send email: ${error.message}`);
   }
 };
 

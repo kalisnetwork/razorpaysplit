@@ -1,3 +1,4 @@
+// invoiceController.js
 import { adminInstance } from '../utils/firebase.js';
 import invoiceService from '../services/invoiceService.js';
 import admin from 'firebase-admin';
@@ -39,20 +40,41 @@ export const sendInvoiceEmail = async (req, res) => {
             }
         }
 
-        if (!user) {
-            return res.status(404).json({ 
-                success: false, 
-                message: "User not found in either collection" 
-            });
-        }
+        // Create current timestamp
+        const currentTimestamp = {
+            _seconds: Math.floor(Date.now() / 1000),
+            _nanoseconds: (Date.now() % 1000) * 1000000
+        };
 
-        // Check for creationTime property or set a default
-        if (!user.createdAt || !user.createdAt._seconds) {
-            console.warn("Missing creation time, setting default value");
-            user.createdAt = {
-                _seconds: Math.floor(Date.now() / 1000),
-                _nanoseconds: 0,
+        // Default user template
+        const defaultUser = {
+            email: email,
+            fullName: email.split('@')[0],
+            displayName: email.split('@')[0],
+            phoneNumber: 'N/A',
+            countryCode: '+91',
+            createdAt: currentTimestamp,
+            companyName: '',
+            gstNo: '',
+            bankDetails: null
+        };
+
+        // If user exists, merge with defaults while preserving existing values
+        if (user) {
+            user = {
+                ...defaultUser,
+                ...user,
+                // Always ensure these critical fields exist and are properly formatted
+                email: user.email || email,
+                fullName: user.fullName || user.displayName || email.split('@')[0],
+                displayName: user.displayName || user.fullName || email.split('@')[0],
+                phoneNumber: user.phoneNumber || 'N/A',
+                countryCode: user.countryCode || '+91',
+                // Set createdAt with proper format
+                createdAt: currentTimestamp
             };
+        } else {
+            user = defaultUser;
         }
 
         // Generate invoice ID
@@ -119,47 +141,5 @@ export const sendInvoiceEmail = async (req, res) => {
             message: "Failed to process invoice request",
             error: error.message
         });
-    }
-};
-
-// Adding new functions to handle payment processing and invoice update
-
-export const handleSplitPaymentInvoice = async (req, res) => {
-    try {
-        const paymentResult = await processPayment(req, res);
-        if (!paymentResult.success) {
-            return;
-        }
-
-        const { email, paymentId, amount, commissionAmount, transferDetails } = req.body;
-        console.log('Updating invoice after split payment:', { email, paymentId, amount, commissionAmount, transferDetails });
-
-        // Add splitDetails to the request body
-        req.body.splitDetails = {
-            commissionAmount,
-            transferDetails,
-        };
-
-        await sendInvoiceEmail(req, res);
-    } catch (error) {
-        console.error('Error handling split payment invoice:', error);
-        res.status(500).json({ success: false, message: 'Failed to handle split payment invoice', error: error.message });
-    }
-};
-
-export const handleDirectPaymentInvoice = async (req, res) => {
-    try {
-        const paymentResult = await directPaymentOrder(req, res);
-        if (!paymentResult.success) {
-            return;
-        }
-
-        const { email, paymentId, amount } = req.body;
-        console.log('Updating invoice after direct payment:', { email, paymentId, amount });
-
-        await sendInvoiceEmail(req, res);
-    } catch (error) {
-        console.error('Error handling direct payment invoice:', error);
-        res.status(500).json({ success: false, message: 'Failed to handle direct payment invoice', error: error.message });
     }
 };

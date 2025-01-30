@@ -1,9 +1,9 @@
 
-```
-rpintegration
 ├─ config
 │  └─ config.js
 ├─ controllers
+│  ├─ invoiceController.js
+│  ├─ linkedAccountController.js
 │  └─ paymentController.js
 ├─ index.js
 ├─ package-lock.json
@@ -13,7 +13,13 @@ rpintegration
 │  └─ success.html
 ├─ README.md
 ├─ routes
-│  └─ paymentRoutes.js
+│  ├─ configRoutes.js
+│  ├─ invoiceRoutes.js
+│  ├─ linkedAccountRoutes.js
+│  ├─ paymentRoutes.js
+│  └─ userRoutes.js
+├─ services
+│  └─ invoiceService.js
 └─ utils
    ├─ fileUpload.js
    ├─ firebase.js

@@ -1,9 +1,10 @@
-// invoiceRoutes.js
+// routes/invoiceRoutes.js
 import express from 'express';
 import { sendInvoiceEmail } from '../controllers/invoiceController.js';
 
 const router = express.Router();
 
-router.post('/sendInvoice', sendInvoiceEmail);
+// Invoice routes
+router.post('/send-email', sendInvoiceEmail);
 
 export default router;

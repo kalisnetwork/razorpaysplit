@@ -1,10 +1,13 @@
+// index.js
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import paymentRoutes from './routes/paymentRoutes.js';
-import invoiceRoutes from './routes/invoiceRoutes.js';
 import cors from 'cors';
-import multer from 'multer';
+
+// Import routes
+import paymentRoutes from './routes/paymentRoutes.js';
+import linkedAccountRoutes from './routes/linkedAccountRoutes.js';
+import invoiceRoutes from './routes/invoiceRoutes.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -13,40 +16,65 @@ const port = process.env.PORT || 5000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static files from the 'public' directory
+// Middleware
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Enable CORS
+// CORS configuration
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'http://localhost:5500',
-    /^http:\/\/localhost:\d{4}$/
-  ],
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
     credentials: true,
     optionsSuccessStatus: 200,
 }));
 
-// Built-in express body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsing middleware
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-
-// Multer setup for file uploads
-const upload = multer();
-app.use(upload.fields([
-    { name: 'bannerImageUrl', maxCount: 1 },
-    { name: 'businessLogoUrl', maxCount: 1 },
-    { name: 'galleryImageUrls', maxCount: 10 }
-]));
-
-
-// Use payment routes
+// Routes
 app.use('/api/payments', paymentRoutes);
+app.use('/api/linked-accounts', linkedAccountRoutes);
 app.use('/api/invoices', invoiceRoutes);
 
-app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-    console.log(`Server running at http://localhost:${port}`);
+// Welcome route
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Welcome to the Payment Integration API',
+        version: '1.0.0',
+        endpoints: {
+            payments: '/api/payments',
+            linkedAccounts: '/api/linked-accounts',
+            invoices: '/api/invoices'
+        }
+    });
 });
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Error:', err);
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || 'Internal Server Error',
+        error: process.env.NODE_ENV === 'development' ? err : {}
+    });
+});
+
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: 'Route not found'
+    });
+});
+
+// Start server
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+    console.log('Available endpoints:');
+    console.log('- /api/payments');
+    console.log('- /api/linked-accounts');
+    console.log('- /api/invoices');
+});
+
+export default app;

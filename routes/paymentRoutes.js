@@ -5,7 +5,7 @@ import {
     handlePaymentWebhook, 
     getPaymentDetails,
     directPaymentOrder,
-    checkTransferStatus
+    getTransferStatus // Update import to getTransferStatus
 } from '../controllers/paymentController.js';
 
 const router = express.Router();
@@ -17,6 +17,6 @@ router.get('/details/:paymentId', getPaymentDetails);
 router.post('/order', directPaymentOrder);
 
 // New route for checking transfer status
-router.get('/transfer/:transferId', checkTransferStatus);
+router.get('/transfer/:transferId', getTransferStatus);
 
 export default router;

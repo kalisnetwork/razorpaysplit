@@ -1,5 +1,5 @@
 // controllers/paymentController.js
-import { createRazorpayOrder, verifyRazorpayPayment } from '../utils/razorpayUtils.js';
+import { createRazorpayOrder, verifyRazorpayPayment, createOrder, checkTransferStatus as razorpayCheckTransferStatus } from '../utils/razorpayUtils.js';
 import { db } from '../utils/firebase.js';
 import admin from 'firebase-admin';
 import Razorpay from 'razorpay';
@@ -17,7 +17,8 @@ export const processPayment = async (req, res) => {
             amount, 
             currency = 'INR',
             linkedAccountId, 
-            commissionAmount, 
+            commissionAmount,
+            upiId, // Add UPI ID
             order_id,
             payment_id,
             signature 
@@ -48,37 +49,30 @@ export const processPayment = async (req, res) => {
                     }
                 };
 
-                // Only add commission details if they exist
-                if (linkedAccountId && commissionAmount) {
+                // Process UPI transfer if commission exists
+                if (commissionAmount && upiId) {
                     transactionData.commissionDetails = {
-                        accountId: linkedAccountId,
                         amount: commissionAmount,
+                        upiId: upiId,
                         status: 'pending'
                     };
 
                     try {
-                        // Process instant transfer
-                        const transferResponse = await razorpay.payments.transfer(payment_id, {
-                            transfers: [{
-                                account: linkedAccountId,
-                                amount: Math.round(commissionAmount * 100), // Convert to paise
-                                currency: currency,
-                                on_hold: false,
-                                notes: {
-                                    purpose: "instant_commission_transfer"
-                                }
-                            }]
-                        });
+                        // Create instant UPI transfer
+                        const transferResult = await createInstantUPITransfer(
+                            commissionAmount,
+                            upiId,
+                            `comm_${payment_id}`
+                        );
 
-                        // Update transaction with transfer details if successful
-                        if (transferResponse && transferResponse.id) {
-                            transactionData.commissionDetails.transferId = transferResponse.id;
-                            transactionData.commissionDetails.status = 'transferred';
-                            transactionData.transfer = transferResponse;
+                        if (transferResult.success) {
+                            transactionData.commissionDetails.status = 'processed';
+                            transactionData.commissionDetails.payoutId = transferResult.payout.id;
+                            transactionData.commissionDetails.transferDetails = transferResult.payout;
                             transactionData.notes.commission_transferred = true;
                         }
                     } catch (transferError) {
-                        console.error('Transfer failed:', transferError);
+                        console.error('UPI transfer failed:', transferError);
                         transactionData.commissionDetails.status = 'failed';
                         transactionData.commissionDetails.error = transferError.message;
                     }
@@ -95,7 +89,7 @@ export const processPayment = async (req, res) => {
                         totalAmount: amount,
                         commissionAmount: commissionAmount,
                         mainAmount: amount - (commissionAmount || 0),
-                        transfer: transactionData.transfer || null
+                        transfer: transactionData.commissionDetails || null
                     }
                 });
 
@@ -248,7 +242,7 @@ export const directPaymentOrder = async (req, res) => {
         const order = await createOrder(amount);
         console.log('Direct payment order created successfully, order ID:', order.id);
         
-        return res.status(20).json({ 
+        return res.status(200).json({ 
             success: true, 
             order 
         });
@@ -263,10 +257,10 @@ export const directPaymentOrder = async (req, res) => {
 };
 
 // Add new endpoint to check transfer status
-export const checkTransferStatus = async (req, res) => {
+export const getTransferStatus = async (req, res) => {
     try {
         const { transferId } = req.params;
-        const transfer = await checkTransferStatus(transferId);
+        const transfer = await razorpayCheckTransferStatus(transferId);
         
         res.status(200).json({
             success: true,

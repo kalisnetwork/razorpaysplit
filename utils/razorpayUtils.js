@@ -119,6 +119,7 @@ export const createInstantTransfer = async (paymentId, linkedAccountId, amount, 
     throw error;
   }
 };
+
 export const createOrder = async (amount) => {
   if (!amount || amount <= 0) {
     throw new Error('Invalid amount');
@@ -176,6 +177,41 @@ export const getPaymentTransfers = async (paymentId) => {
     return transfers;
   } catch (error) {
     console.error('Error fetching payment transfers:', error);
+    throw error;
+  }
+};
+
+export const createInstantUPITransfer = async (amount, upiId, referenceId = null) => {
+  try {
+    console.log('Creating instant UPI transfer:', { amount, upiId, referenceId });
+    
+    const payoutData = {
+      account_number: "9391062421",
+      fund_account: {
+        account_type: "vpa",
+        vpa: {
+          address: upiId
+        }
+      },
+      amount: Math.round(amount * 100), // Convert to paise
+      currency: "INR",
+      mode: "UPI",
+      purpose: "payout",
+      queue_if_low_balance: false, // For instant transfer
+      reference_id: referenceId || `trans_${Date.now()}`,
+      narration: "Instant Commission Transfer"
+    };
+
+    console.log('Payout request data:', payoutData);
+    const payout = await razorpay.payouts.create(payoutData);
+    console.log('Payout created successfully:', payout);
+    
+    return {
+      success: true,
+      payout: payout
+    };
+  } catch (error) {
+    console.error('UPI transfer failed:', error);
     throw error;
   }
 };

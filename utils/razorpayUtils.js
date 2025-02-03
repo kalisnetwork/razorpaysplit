@@ -172,7 +172,7 @@ export const reverseTransfer = async (transferId, amount = null) => {
 export const getPaymentTransfers = async (paymentId) => {
   try {
     console.log('Fetching transfers for payment:', paymentId);
-    const transfers = await razorpay.payments.fetchTransfers(paymentId);
+    const transfers = await razorpay.payments.fetchTransfer(paymentId);
     console.log('Transfers fetched successfully:', transfers);
     return transfers;
   } catch (error) {

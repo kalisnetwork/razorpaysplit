@@ -275,3 +275,29 @@ export const getTransferStatus = async (req, res) => {
         });
     }
 };
+
+export const verifyPayment = async (req, res) => {
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        const isValid = verifyRazorpayPayment(razorpay_order_id, razorpay_payment_id, razorpay_signature);
+
+        if (isValid) {
+            return res.status(200).json({
+                success: true,
+                message: 'Payment verified successfully'
+            });
+        } else {
+            return res.status(400).json({
+                success: false,
+                message: 'Payment verification failed'
+            });
+        }
+    } catch (error) {
+        console.error('Error verifying payment:', error);
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Failed to verify payment',
+            error: error.message 
+        });
+    }
+};

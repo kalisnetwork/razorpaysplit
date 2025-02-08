@@ -9,6 +9,15 @@ const transporter = nodemailer.createTransport({
         user: "invoice@addphonebook.com",
         pass: "Lakshmiraj2024@",
     },
+    pool: true,
+    maxConnections: 1,
+    rateDelta: 20000,
+    rateLimit: 5,
+    dkim: {
+        domainName: "addphonebook.com",
+        keySelector: "default",
+        privateKey: "YOUR_DKIM_PRIVATE_KEY"
+    }
 });
 
 const sendEmail = async (
@@ -218,15 +227,45 @@ const sendEmail = async (
   `;
 
   const mailOptions = {
-    from: "invoice@addphonebook.com",
-    to: email,
-    subject: "Your Invoice from Add Phone Book",
+    from: {
+        name: "AddPhoneBook Billing",
+        address: "invoice@addphonebook.com"
+    },
+    to: {
+        name: recipientName,
+        address: email
+    },
+    subject: `Payment Receipt - Invoice #${invoiceId} - AddPhoneBook`,
     html: htmlContent,
+    text: `Thank you for your payment of INR ${amount} to AddPhoneBook. Your invoice number is ${invoiceId}.`,
+    headers: {
+      'Precedence': 'bulk',
+      'X-Auto-Response-Suppress': 'OOF, AutoReply',
+      'List-Unsubscribe': `<mailto:unsubscribe@addphonebook.com?subject=unsubscribe&email=${email}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      'X-Report-Abuse': 'Please report abuse at https://addphonebook.com/report-abuse',
+      'X-Mailer': 'AddPhoneBook Billing System 1.0'
+    },
+    dsn: {
+      id: invoiceId,
+      return: 'headers',
+      notify: ['failure', 'delay'],
+      recipient: 'invoice@addphonebook.com'
+    }
   };
 
   try {
-    await transporter.sendMail(mailOptions);
-    return { success: true, message: `Email sent to ${email}` };
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    await transporter.verify();
+    
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Message sent: %s', info.messageId);
+    return { 
+      success: true, 
+      message: `Email sent to ${email}`, 
+      messageId: info.messageId 
+    };
   } catch (error) {
     console.error('Error sending email:', error);
     throw new Error(`Failed to send email: ${error.message}`);

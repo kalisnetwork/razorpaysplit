@@ -5,6 +5,6 @@ import { sendInvoiceEmail } from '../controllers/invoiceController.js';
 const router = express.Router();
 
 // Invoice routes
-router.post('/send-email', sendInvoiceEmail);
+router.post('/sendInvoice', sendInvoiceEmail);
 
 export default router;
